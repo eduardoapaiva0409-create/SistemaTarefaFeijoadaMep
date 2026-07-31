@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1d3e5d" />
+    <title>Sem conexão | AutoRio Tarefas</title>
+    <!-- CSS inline: esta página tem que funcionar sem rede, então não pode
+         depender do bundle do Next nem da fonte Geist do Google. -->
+    <style>
+      :root {
+        --navy: #1d3e5d;
+        --gold: #c9a24b;
+        --fundo: #f5f5f7;
+        --texto: #1d1d1f;
+        --apagado: #6e6e73;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .cartao {
+        width: 100%;
+        max-width: 24rem;
+        background: #fff;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.04);
+        outline: 1px solid rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        text-align: center;
+      }
+      .marca {
+        background: var(--navy);
+        padding: 1.5rem;
+      }
+      .marca img { width: 4rem; height: 4rem; display: block; margin: 0 auto; }
+      .corpo { padding: 1.5rem; }
+      h1 {
+        margin: 0 0 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      p { margin: 0; font-size: 0.875rem; line-height: 1.5; color: var(--apagado); }
+      button {
+        margin-top: 1.5rem;
+        width: 100%;
+        padding: 0.75rem;
+        font: inherit;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: #fff;
+        background: var(--navy);
+        border: 0;
+        border-radius: 0.5rem;
+        cursor: pointer;
+      }
+      button:active { transform: translateY(1px); }
+      @media (prefers-color-scheme: dark) {
+        :root { --fundo: #1a1a1a; --texto: #f5f5f7; --apagado: #a1a1a6; }
+        .cartao { background: #262626; outline-color: rgba(255, 255, 255, 0.1); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="cartao">
+      <div class="marca">
+        <img src="/icon-192.png" alt="AutoRio" width="64" height="64" />
+      </div>
+      <div class="corpo">
+        <h1>Sem conexão</h1>
+        <p>
+          O sistema de tarefas precisa de internet para mostrar o quadro
+          atualizado. Confira o wi-fi ou os dados do celular e tente de novo.
+        </p>
+        <button type="button" onclick="location.reload()">Tentar de novo</button>
+      </div>
+    </div>
+  </body>
+</html>
