@@ -6,6 +6,7 @@ import {
   labelPrazo,
   toISODate,
 } from "@/lib/format";
+import { FASE_ORDER, calcularFase, type Fase } from "@/lib/feijoada";
 import type { Prioridade, TaskStatus, TaskWithRelations } from "@/lib/types";
 
 /**
@@ -14,8 +15,8 @@ import type { Prioridade, TaskStatus, TaskWithRelations } from "@/lib/types";
  */
 export const TASK_SELECT = `
   *,
-  responsavel:profiles!responsavel_id (id, nome, cargo),
-  autor:profiles!criado_por (id, nome, cargo),
+  responsavel:profiles!responsavel_id (id, nome, funcao, foto_url),
+  autor:profiles!criado_por (id, nome, funcao, foto_url),
   task_items (id, concluido)
 `;
 
@@ -143,11 +144,32 @@ export function calcularMetricas(tasks: TaskWithRelations[]): Metricas {
   };
 }
 
+export type GrupoFase = { fase: Fase; tasks: TaskWithRelations[] };
+
+/** Tarefas agrupadas pela fase de preparação do prazo — só fases com conteúdo. */
+export function agruparPorFase(tasks: TaskWithRelations[]): GrupoFase[] {
+  const porFase = new Map<Fase, TaskWithRelations[]>();
+  for (const task of tasks) {
+    const fase = calcularFase(task.prazo);
+    porFase.set(fase, [...(porFase.get(fase) ?? []), task]);
+  }
+  return FASE_ORDER.map((fase) => ({
+    fase,
+    tasks: ordenarPorUrgencia(porFase.get(fase) ?? []),
+  })).filter((g) => g.tasks.length > 0);
+}
+
 /** Carga aberta por pessoa, para a barra de proporção do dashboard. */
 export function cargaPorResponsavel(tasks: TaskWithRelations[]) {
   const mapa = new Map<
     string,
-    { id: string | null; nome: string; abertas: number; atrasadas: number }
+    {
+      id: string | null;
+      nome: string;
+      fotoUrl: string | null;
+      abertas: number;
+      atrasadas: number;
+    }
   >();
 
   for (const task of tasks) {
@@ -156,6 +178,7 @@ export function cargaPorResponsavel(tasks: TaskWithRelations[]) {
     const atual = mapa.get(id) ?? {
       id: task.responsavel_id,
       nome: task.responsavel?.nome ?? "Sem responsável",
+      fotoUrl: task.responsavel?.foto_url ?? null,
       abertas: 0,
       atrasadas: 0,
     };

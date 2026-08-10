@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { excluirPessoa } from "@/app/(app)/equipe/actions";
-import { PAPEL_LABELS } from "@/lib/format";
+import {
+  FUNCAO_LABELS,
+  FUNCAO_ORDER,
+  PAPEL_LABELS,
+  SETOR_LABELS,
+  SETOR_ORDER,
+} from "@/lib/format";
 import { isAtrasada } from "@/lib/tasks";
 import type { Profile, TaskWithRelations } from "@/lib/types";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -16,6 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -23,6 +36,28 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
+/** Sentinela do "não atribuído" — vale para os dois filtros. */
+const SEM = "__sem__";
+
+const SETOR_FILTROS = [
+  { value: "todos", label: "Todo setor" },
+  ...SETOR_ORDER.map((v) => ({ value: v, label: SETOR_LABELS[v] })),
+  { value: SEM, label: "Sem setor" },
+];
+
+const FUNCAO_FILTROS = [
+  { value: "todos", label: "Toda função" },
+  ...FUNCAO_ORDER.map((v) => ({ value: v, label: FUNCAO_LABELS[v] })),
+  { value: SEM, label: "Sem função" },
+];
+
+/** Posição do setor na ordem de exibição; sem setor sempre por último. */
+function ordemSetor(setor: Profile["setor"]): number {
+  if (!setor) return SETOR_ORDER.length;
+  const i = SETOR_ORDER.indexOf(setor);
+  return i === -1 ? SETOR_ORDER.length : i;
+}
 
 export function EquipeView({
   pessoas,
@@ -39,6 +74,28 @@ export function EquipeView({
   const [dialogAberto, setDialogAberto] = useState(false);
   const [emEdicao, setEmEdicao] = useState<Profile | null>(null);
   const [paraExcluir, setParaExcluir] = useState<Profile | null>(null);
+  const [filtroSetor, setFiltroSetor] = useState("todos");
+  const [filtroFuncao, setFiltroFuncao] = useState("todos");
+
+  const pessoasOrdenadas = useMemo(() => {
+    return [...pessoas]
+      .filter((p) => {
+        if (filtroSetor === SEM && p.setor) return false;
+        if (filtroSetor !== "todos" && filtroSetor !== SEM) {
+          if (p.setor !== filtroSetor) return false;
+        }
+        if (filtroFuncao === SEM && p.funcao) return false;
+        if (filtroFuncao !== "todos" && filtroFuncao !== SEM) {
+          if (p.funcao !== filtroFuncao) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        const os = ordemSetor(a.setor) - ordemSetor(b.setor);
+        if (os !== 0) return os;
+        return a.nome.localeCompare(b.nome, "pt-BR");
+      });
+  }, [pessoas, filtroSetor, filtroFuncao]);
 
   const contagem = new Map<string, { abertas: number; atrasadas: number }>();
   for (const task of tasks) {
@@ -83,6 +140,44 @@ export function EquipeView({
         )}
       </PageHeader>
 
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <Select
+          items={FUNCAO_FILTROS}
+          value={filtroFuncao}
+          onValueChange={(v) => setFiltroFuncao(v as string)}
+        >
+          <SelectTrigger className="w-full sm:w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FUNCAO_FILTROS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          items={SETOR_FILTROS}
+          value={filtroSetor}
+          onValueChange={(v) => setFiltroSetor(v as string)}
+        >
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SETOR_FILTROS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {pessoasOrdenadas.length} de {pessoas.length}
+        </span>
+      </div>
+
       <Card>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
@@ -90,7 +185,8 @@ export function EquipeView({
               <TableHeader>
                 <TableRow>
                   <TableHead>Pessoa</TableHead>
-                  <TableHead>Cargo</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Setor</TableHead>
                   <TableHead>Permissão</TableHead>
                   <TableHead className="text-right">Abertas</TableHead>
                   <TableHead className="text-right">Atrasadas</TableHead>
@@ -100,17 +196,17 @@ export function EquipeView({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pessoas.length === 0 ? (
+                {pessoasOrdenadas.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={souAdmin ? 6 : 5}
+                      colSpan={souAdmin ? 7 : 6}
                       className="h-24 text-center text-muted-foreground"
                     >
                       Nada por aqui ainda.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  pessoas.map((pessoa) => {
+                  pessoasOrdenadas.map((pessoa) => {
                     const numeros = contagem.get(pessoa.id) ?? {
                       abertas: 0,
                       atrasadas: 0,
@@ -119,7 +215,7 @@ export function EquipeView({
                       <TableRow key={pessoa.id}>
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <UserAvatar nome={pessoa.nome} />
+                            <UserAvatar nome={pessoa.nome} fotoUrl={pessoa.foto_url} />
                             <div className="min-w-0">
                               <p className="flex items-center gap-2 font-medium">
                                 {pessoa.nome}
@@ -130,13 +226,24 @@ export function EquipeView({
                                 )}
                               </p>
                               <p className="truncate text-xs text-muted-foreground">
-                                {pessoa.email ?? "—"}
+                                {pessoa.tem_acesso
+                                  ? (pessoa.email ?? "—")
+                                  : "Sem acesso ao sistema"}
                               </p>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {pessoa.cargo ?? "—"}
+                          {pessoa.funcao ? FUNCAO_LABELS[pessoa.funcao] : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {pessoa.setor ? (
+                            <Badge variant="outline">
+                              {SETOR_LABELS[pessoa.setor]}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">

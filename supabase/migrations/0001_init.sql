@@ -1,5 +1,5 @@
 -- ════════════════════════════════════════════════════════════════════════════
--- Sistema de Tarefas AutoRio — schema inicial
+-- Sistema de Tarefas — Feijoada do Escalada — schema inicial
 -- ════════════════════════════════════════════════════════════════════════════
 -- Quatro tabelas: profiles (a equipe), tasks (o centro), task_items (checklist)
 -- e task_events (comentários + histórico). Oficina única, sem multi-tenant.

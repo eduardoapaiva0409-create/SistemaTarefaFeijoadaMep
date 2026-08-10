@@ -44,33 +44,41 @@ export default function LoginPage() {
     <div className="flex min-h-dvh">
       {/* Painel da marca (desktop) */}
       <div className="hidden lg:flex flex-1 items-center justify-center bg-(--brand-navy) p-16">
-        <Image
-          src="/logo-autorio.jpg"
-          alt="AutoRio — Funilaria e Pintura"
-          width={1000}
-          height={485}
-          priority
-          className="w-full max-w-md"
-        />
+        <div className="w-full max-w-xs text-center">
+          <Image
+            src="/logo-escalada.jpg"
+            alt="Escalada"
+            width={447}
+            height={447}
+            priority
+            className="mx-auto w-full rounded-3xl shadow-2xl"
+          />
+          <p className="mt-6 text-lg font-semibold tracking-tight text-white">
+            Feijoada do Escalada
+          </p>
+        </div>
       </div>
 
       {/* Formulário */}
       <div className="flex flex-1 items-center justify-center bg-background p-6 pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
         <div className="w-full max-w-sm">
-          <div className="mb-10 rounded-2xl bg-(--brand-navy) px-8 py-6 lg:hidden">
+          <div className="mb-10 flex flex-col items-center gap-3 rounded-2xl bg-(--brand-navy) px-8 py-6 lg:hidden">
             <Image
-              src="/logo-autorio.jpg"
-              alt="AutoRio — Funilaria e Pintura"
-              width={1000}
-              height={485}
+              src="/logo-escalada.jpg"
+              alt="Escalada"
+              width={447}
+              height={447}
               priority
-              className="mx-auto w-full max-w-56"
+              className="w-28 rounded-2xl"
             />
+            <p className="text-sm font-semibold tracking-tight text-white">
+              Feijoada do Escalada
+            </p>
           </div>
 
           <h1 className="text-3xl font-semibold tracking-tight">Bem-vindo</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Entre para ver e acompanhar as tarefas da AutoRio.
+            Entre para ver e acompanhar as tarefas da Feijoada do Escalada.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 grid gap-5">

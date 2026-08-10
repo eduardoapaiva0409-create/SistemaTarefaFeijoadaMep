@@ -16,16 +16,16 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "AutoRio Tarefas",
-    template: "%s | AutoRio Tarefas",
+    default: "Feijoada do Escalada",
+    template: "%s | Feijoada do Escalada",
   },
-  description: "Sistema de tarefas da oficina AutoRio",
-  applicationName: "AutoRio Tarefas",
+  description: "Sistema de tarefas da organização da Feijoada do Escalada",
+  applicationName: "Feijoada do Escalada",
   appleWebApp: {
     capable: true,
-    title: "Tarefas",
-    // A barra de status fica translúcida sobre o navy do header — por isso o
-    // shell reserva env(safe-area-inset-top).
+    title: "Feijoada",
+    // A barra de status fica translúcida sobre o charcoal-navy do header —
+    // por isso o shell reserva env(safe-area-inset-top).
     statusBarStyle: "black-translucent",
   },
   icons: {
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d3e5d",
+  themeColor: "#242c39",
   width: "device-width",
   initialScale: 1,
   // Necessário para env(safe-area-inset-*) valer no iPhone com notch.

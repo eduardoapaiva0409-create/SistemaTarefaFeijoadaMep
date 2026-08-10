@@ -10,14 +10,26 @@ export function PageSkeleton({
   cards = 4,
   rows = 6,
   chart = false,
+  hero = false,
 }: {
   cards?: number;
   rows?: number;
   chart?: boolean;
+  hero?: boolean;
 }) {
   return (
     <div>
       <PageHeaderSkeleton />
+
+      {hero && (
+        <Card className="mb-4">
+          <CardContent className="space-y-2 py-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-40" />
+          </CardContent>
+        </Card>
+      )}
 
       {cards > 0 && (
         <div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

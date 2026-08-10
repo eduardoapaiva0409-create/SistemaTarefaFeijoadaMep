@@ -4,23 +4,25 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Sistema de Tarefas AutoRio
+# Sistema de Tarefas — Feijoada do Escalada
 
-Delegação e acompanhamento de tarefas de uma oficina de funilaria e pintura
-(AutoRio). Irmão do **Sistema Financeiro AutoRio** (`../Sistema Financeiro  AR`):
-mesma stack, mesmo design system, **bancos Supabase separados**.
+Delegação e acompanhamento de tarefas da organização da Feijoada do Escalada
+(evento do grupo de escalada). Derivado do Sistema de Tarefas AutoRio: mesma
+stack, mesmo design system, **banco Supabase próprio e separado** — nenhum
+dado do projeto original é reaproveitado.
 
-**Escopo: exclusivamente tarefas.** Não é ordem de serviço nem CRM. Não
-reintroduzir cadastro de clientes, veículos, orçamentos ou qualquer coisa
-financeira — isso é do outro sistema.
+**Escopo: exclusivamente tarefas.** Delegar, acompanhar e concluir tarefas da
+organização do evento (compras, logística, equipe). Não é sistema financeiro
+nem controle de convidados/vendas de ingresso — se isso vier a existir, é
+sistema separado, como no projeto original.
 
 ## Stack
 
 - Next.js 16 (App Router, `src/`) + TypeScript + Tailwind CSS v4
-- shadcn/ui sobre **Base UI** (não Radix) — componentes em `src/components/ui/`,
-  copiados do Sistema Financeiro para o visual sair idêntico
-- Supabase (banco + auth). Projeto próprio, separado do Financeiro:
-  `https://doejvfajvgzipgzfoocq.supabase.co` (ref `doejvfajvgzipgzfoocq`)
+- shadcn/ui sobre **Base UI** (não Radix) — componentes em `src/components/ui/`
+- Supabase (banco + auth). **Projeto ainda não provisionado** — crie um
+  projeto novo em [supabase.com](https://supabase.com) e siga o `README.md`
+  (rodar `supabase/migrations/` em ordem, preencher `.env.local`)
 - Recharts para o gráfico do dashboard; sonner para toasts
 
 ## Comandos
@@ -90,7 +92,16 @@ financeira — isso é do outro sistema.
 - `profiles.papel` (`admin` | `colaborador`) é a permissão. O **primeiro**
   perfil criado vira admin sozinho (`handle_new_user`), senão ninguém poderia
   promover ninguém.
-- RLS: todos os autenticados **leem** tudo (a oficina precisa enxergar o
+- **`funcao` e `setor` são listas fechadas** (0006). A antiga coluna `cargo`
+  (texto livre) virou `profiles.funcao` com check
+  (`coordenacao` | `apoio` | `conselheiro`) — texto livre não filtra, cada um
+  escreve diferente. Rótulos e ordem de exibição vivem em `src/lib/format.ts`
+  (`FUNCAO_LABELS`/`FUNCAO_ORDER`, `SETOR_LABELS`/`SETOR_ORDER`).
+- `tasks.setor` (0007) é **opcional e só organizacional**: agrupa/filtra por
+  frente de trabalho, não muda permissão nem entra no histórico de
+  `task_events`. A lista de setores está duplicada no check de `profiles.setor`
+  e no de `tasks.setor` — setor novo entra nos dois **e** em `SETOR_ORDER`.
+- RLS: todos os autenticados **leem** tudo (a organização precisa enxergar o
   quadro); escrita em `tasks` só para admin, responsável ou criador
   (`pode_editar_task`).
 
@@ -126,11 +137,18 @@ financeira — isso é do outro sistema.
 - Estilo Apple-like: fundo `#f5f5f7`, cards brancos com `ring-black/5` + sombra
   suave, raio base 0.75rem, muito respiro, títulos `tracking-tight`, peso máximo
   `font-semibold`, `tabular-nums` em todo número.
-- Cores da marca em `globals.css`: `--brand-navy` (#1d3e5d, azul exato do fundo
-  da logo) e `--brand-gold` (#c9a24b). `--primary` e `--sidebar` usam o navy.
-- Logo: `public/logo-autorio.jpg` (JPEG com fundo #1d3e5d — só usar sobre
-  superfícies dessa mesma cor, ex.: `bg-sidebar` ou `bg-(--brand-navy)`, senão
-  vira um retângulo). Ícone do app: `src/app/icon.png`.
+- Cores da marca em `globals.css`: `--brand-navy` (#242c39, charcoal-navy
+  extraído da silhueta do escalador na logo) e `--brand-gold` (#d89531,
+  dourado quente extraído do gradiente pôr do sol da logo). `--primary` e
+  `--sidebar` usam o navy.
+- A logo tem vermelho/amarelo vivos (identidade forte do escalada) mas **não
+  viram cor de UI** — vermelho já é `--destructive` e inundar botões/fundo de
+  cor quebraria o visual premium/minimalista. Eles aparecem só dentro da
+  própria imagem da logo.
+- Logo: `public/logo-escalada.jpg` (ilustração de bordo a bordo, sem fundo
+  plano — por isso **não** tenta "colar" no fundo da sidebar como o logo
+  antigo; entra como selo arredondado, `rounded-xl object-cover` num
+  container pequeno ao lado do nome). Ícone do app: `src/app/icon.png`.
 - Fonte Geist. No `@theme inline`, `--font-sans` **tem** que apontar para
   `var(--font-geist-sans)` — o `shadcn init` gera auto-referência circular que
   derruba a página inteira para serifa.

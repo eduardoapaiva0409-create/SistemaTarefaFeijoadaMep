@@ -15,6 +15,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import {
   PRIORIDADE_LABELS,
+  SETOR_LABELS,
   STATUS_LABELS,
   formatDate,
   labelPrazo,
@@ -50,6 +51,7 @@ export function TaskTable({
             <TableHeader>
               <TableRow>
                 <TableHead>Tarefa</TableHead>
+                <TableHead>Setor</TableHead>
                 <TableHead>Responsável</TableHead>
                 <TableHead>Prazo</TableHead>
                 <TableHead>Prioridade</TableHead>
@@ -61,7 +63,7 @@ export function TaskTable({
               {linhas.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="h-24 text-center text-muted-foreground"
                   >
                     Nada por aqui ainda.
@@ -103,8 +105,21 @@ export function TaskTable({
                         </div>
                       </TableCell>
                       <TableCell>
+                        {task.setor ? (
+                          <Badge variant="outline" className="font-normal">
+                            {SETOR_LABELS[task.setor]}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
-                          <UserAvatar nome={task.responsavel?.nome} size="sm" />
+                          <UserAvatar
+                            nome={task.responsavel?.nome}
+                            fotoUrl={task.responsavel?.foto_url}
+                            size="sm"
+                          />
                           <span className="text-muted-foreground">
                             {task.responsavel
                               ? primeiroNome(task.responsavel.nome)

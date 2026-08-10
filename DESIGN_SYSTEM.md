@@ -134,16 +134,16 @@ pelas cores da nova marca — o resto é a base neutra que faz o visual.
 
 :root {
   /* ↓↓↓ ÚNICA PARTE QUE MUDA POR PROJETO ↓↓↓ */
-  --brand-navy: #1d3e5d;   /* cor principal da marca */
-  --brand-gold: #c9a24b;   /* cor de destaque/acento */
-  --primary: #1d3e5d;
-  --secondary-foreground: #1d3e5d;
-  --accent-foreground: #1d3e5d;
-  --ring: #8aa5bd;         /* versão clara/dessaturada da primária */
-  --sidebar: #1d3e5d;
-  --sidebar-primary: #c9a24b;
-  --sidebar-primary-foreground: #1d3e5d;
-  --sidebar-ring: #8aa5bd;
+  --brand-navy: #242c39;   /* cor principal da marca */
+  --brand-gold: #d89531;   /* cor de destaque/acento */
+  --primary: #242c39;
+  --secondary-foreground: #242c39;
+  --accent-foreground: #242c39;
+  --ring: #96a2b6;         /* versão clara/dessaturada da primária */
+  --sidebar: #242c39;
+  --sidebar-primary: #d89531;
+  --sidebar-primary-foreground: #242c39;
+  --sidebar-ring: #96a2b6;
   /* ↑↑↑ ------------------------------- ↑↑↑ */
 
   --background: #f5f5f7;   /* cinza Apple, nunca branco puro */
@@ -180,15 +180,15 @@ pelas cores da nova marca — o resto é a base neutra que faz o visual.
 }
 
 .dark {
-  --brand-navy: #1d3e5d;
-  --brand-gold: #d4b05e;
+  --brand-navy: #242c39;
+  --brand-gold: #e6a84c;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #35618c;              /* primária clareada p/ contraste no escuro */
+  --primary: #49586e;              /* primária clareada p/ contraste no escuro */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -202,14 +202,14 @@ pelas cores da nova marca — o resto é a base neutra que faz o visual.
   --ring: oklch(0.556 0 0);
   --chart-receita: #3987e5;
   --chart-despesa: #e66767;
-  --sidebar: #1d3e5d;
+  --sidebar: #242c39;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #d4b05e;
-  --sidebar-primary-foreground: #1d3e5d;
+  --sidebar-primary: #e6a84c;
+  --sidebar-primary-foreground: #242c39;
   --sidebar-accent: rgba(255, 255, 255, 0.1);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #8aa5bd;
+  --sidebar-ring: #96a2b6;
 }
 
 @layer base {
@@ -221,12 +221,28 @@ pelas cores da nova marca — o resto é a base neutra que faz o visual.
 
 ### Como escolher as cores da nova marca
 
-1. `--brand-navy` = cor sólida da logo. Se a logo for JPEG com fundo colorido,
-   pegue **o hex exato do fundo** — assim a imagem funde sem emenda quando
-   colocada sobre `bg-sidebar`.
-2. `--brand-gold` = acento, usado só em ícone ativo da sidebar e detalhes.
+1. `--brand-navy` = cor sólida da logo. Se a logo for JPEG/PNG com fundo
+   colorido plano, pegue **o hex exato do fundo** — assim a imagem funde sem
+   emenda quando colocada sobre `bg-sidebar`. Se a logo for uma ilustração
+   sem fundo plano (cores fortes, gradiente, sem margem sólida — caso da
+   Feijoada do Escalada: vermelho→amarelo vivo com a silhueta do escalador),
+   **não force o fundo do app a virar essa cor viva**. Em vez disso, extraia
+   o tom mais escuro/neutro presente na própria ilustração (aqui, o
+   charcoal-navy `#242c39` da silhueta) e use como `--brand-navy` — mantém o
+   peso "premium" do painel escuro, e a logo entra como selo arredondado
+   (`rounded-xl object-cover`, não mais `w-full` colado no fundo).
+2. `--brand-gold` = acento, usado só em ícone ativo da sidebar e detalhes. Se
+   a marca tiver cores vivas que não podem virar `--primary` (vermelho já é
+   `--destructive`, por exemplo), derive um dourado/âmbar a partir delas —
+   aqui veio do gradiente pôr do sol da logo (`#d89531`), mais saturado que o
+   dourado-padrão porque a marca pedia cores fortes, mas ainda desaturado o
+   bastante pra não brigar com o âmbar semântico de "pendente".
 3. `--ring` = a primária clareada/dessaturada (~40% de luminosidade a mais).
 4. `--primary` no dark = primária ~15% mais clara, senão some no fundo escuro.
+5. As cores de bandeira da marca (aqui, o vermelho/amarelo vivos) não
+   precisam entrar nos tokens — elas já aparecem através da própria imagem da
+   logo. Encher botões/fundo com elas tiraria o "premium e minimalista";
+   o sistema usa cor com parcimônia de propósito.
 
 ---
 

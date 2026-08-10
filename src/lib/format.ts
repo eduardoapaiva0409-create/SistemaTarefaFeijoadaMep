@@ -1,7 +1,9 @@
 import type {
+  Funcao,
   Papel,
   Prioridade,
   Recorrencia,
+  Setor,
   TaskStatus,
 } from "@/lib/types";
 
@@ -136,9 +138,45 @@ export const RECORRENCIA_LABELS: Record<Recorrencia, string> = {
 };
 
 export const PAPEL_LABELS: Record<Papel, string> = {
-  admin: "Administrador",
-  colaborador: "Colaborador",
+  admin: "Organizador(a)",
+  colaborador: "Participante",
 };
+
+/** Funções da organização da Feijoada do Escalada. */
+export const FUNCAO_LABELS: Record<Funcao, string> = {
+  coordenacao: "Coordenação",
+  apoio: "Apoio",
+  conselheiro: "Conselheiro",
+};
+
+export const FUNCAO_ORDER: Funcao[] = ["coordenacao", "apoio", "conselheiro"];
+
+/** Setores da organização da Feijoada do Escalada. */
+export const SETOR_LABELS: Record<Setor, string> = {
+  coordenacao: "Coordenação",
+  secretaria: "Secretária",
+  tesouraria: "Tesouraria",
+  marketing: "Marketing",
+  infraestrutura: "Infraestrutura",
+  decoracao: "Decoração e Ambientação",
+  tios: "Tios",
+  entretenimento: "Entretenimento",
+  bebidas: "Bebidas",
+  delivery: "Delivery",
+};
+
+export const SETOR_ORDER: Setor[] = [
+  "coordenacao",
+  "secretaria",
+  "tesouraria",
+  "marketing",
+  "infraestrutura",
+  "decoracao",
+  "tios",
+  "entretenimento",
+  "bebidas",
+  "delivery",
+];
 
 /** Iniciais para o avatar sem foto: "João da Silva" → "JS". */
 export function iniciais(nome: string): string {

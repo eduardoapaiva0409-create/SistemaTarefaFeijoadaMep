@@ -1,11 +1,11 @@
-// Service worker do AutoRio Tarefas.
+// Service worker da Feijoada do Escalada.
 //
 // Escopo deliberadamente mínimo: a ÚNICA coisa que ele guarda é a tela de
 // "sem conexão". Tarefa, sessão e checklist NUNCA são cacheados — num sistema
 // de delegação, mostrar "concluída" desatualizada é pior do que mostrar erro
 // de rede. Todo o resto passa direto, como se o SW não existisse.
 
-const CACHE = "autorio-tarefas-shell-v1";
+const CACHE = "feijoada-escalada-tarefas-shell-v1";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {

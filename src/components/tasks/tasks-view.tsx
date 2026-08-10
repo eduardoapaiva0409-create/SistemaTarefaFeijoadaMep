@@ -3,9 +3,16 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CalendarDays, Columns3, List, Plus, Search } from "lucide-react";
+import {
+  CalendarDays,
+  Columns3,
+  List,
+  Milestone,
+  Plus,
+  Search,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { PRIORIDADE_LABELS } from "@/lib/format";
+import { PRIORIDADE_LABELS, SETOR_LABELS, SETOR_ORDER } from "@/lib/format";
 import { isAtrasada } from "@/lib/tasks";
 import type {
   Prioridade,
@@ -27,15 +34,17 @@ import {
 import { KanbanBoard } from "@/components/tasks/kanban-board";
 import { TaskCalendar } from "@/components/tasks/task-calendar";
 import { TaskDialog } from "@/components/tasks/task-dialog";
+import { TaskPhases } from "@/components/tasks/task-phases";
 import { TaskTable } from "@/components/tasks/task-table";
 
-type Vista = "quadro" | "lista" | "calendario";
+type Vista = "quadro" | "lista" | "calendario" | "fases";
 type FiltroStatus = "todas" | "abertas" | "atrasadas" | "concluidas";
 
 const VISTAS = [
   { value: "quadro" as const, label: "Quadro", icon: Columns3 },
   { value: "lista" as const, label: "Lista", icon: List },
   { value: "calendario" as const, label: "Calendário", icon: CalendarDays },
+  { value: "fases" as const, label: "Fases", icon: Milestone },
 ];
 
 const DESCRICAO: Record<Vista, string> = {
@@ -43,6 +52,7 @@ const DESCRICAO: Record<Vista, string> = {
   quadro: "Arraste o card ou use o menu dele para mudar o status.",
   lista: "Atrasadas primeiro. Toque na linha para abrir.",
   calendario: "Cada tarefa no dia do seu prazo.",
+  fases: "Agrupadas pela proximidade da Feijoada.",
 };
 
 const STATUS_FILTROS = [
@@ -61,6 +71,13 @@ const PRIORIDADE_FILTROS = [
 ];
 
 const SEM_RESPONSAVEL = "__sem__";
+const SEM_SETOR = "__sem__";
+
+const SETOR_FILTROS = [
+  { value: "todos", label: "Todo setor" },
+  ...SETOR_ORDER.map((v) => ({ value: v, label: SETOR_LABELS[v] })),
+  { value: SEM_SETOR, label: "Sem setor" },
+];
 
 export function TasksView({
   tasks: tasksIniciais,
@@ -91,6 +108,7 @@ export function TasksView({
   const [filtroResponsavel, setFiltroResponsavel] = useState("todos");
   const [filtroStatus, setFiltroStatus] = useState<FiltroStatus>("todas");
   const [filtroPrioridade, setFiltroPrioridade] = useState("todas");
+  const [filtroSetor, setFiltroSetor] = useState("todos");
 
   const [dialogAberto, setDialogAberto] = useState(false);
   const [emEdicao, setEmEdicao] = useState<TaskWithRelations | null>(null);
@@ -126,9 +144,22 @@ export function TasksView({
       if (filtroPrioridade !== "todas" && task.prioridade !== filtroPrioridade)
         return false;
 
+      if (filtroSetor === SEM_SETOR) {
+        if (task.setor) return false;
+      } else if (filtroSetor !== "todos") {
+        if (task.setor !== filtroSetor) return false;
+      }
+
       return true;
     });
-  }, [tasks, busca, filtroResponsavel, filtroStatus, filtroPrioridade]);
+  }, [
+    tasks,
+    busca,
+    filtroResponsavel,
+    filtroStatus,
+    filtroPrioridade,
+    filtroSetor,
+  ]);
 
   function abrirNova(status: TaskStatus = "a_fazer") {
     setEmEdicao(null);
@@ -266,6 +297,23 @@ export function TasksView({
             </SelectContent>
           </Select>
 
+          <Select
+            items={SETOR_FILTROS}
+            value={filtroSetor}
+            onValueChange={(v) => setFiltroSetor(v as string)}
+          >
+            <SelectTrigger className="w-full sm:w-44">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SETOR_FILTROS.map((item) => (
+                <SelectItem key={item.value} value={item.value}>
+                  {item.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <span className="self-center text-xs tabular-nums text-muted-foreground">
             {filtradas.length} de {tasks.length}
           </span>
@@ -290,6 +338,7 @@ export function TasksView({
       {vista === "calendario" && (
         <TaskCalendar tasks={filtradas} onOpen={abrir} />
       )}
+      {vista === "fases" && <TaskPhases tasks={filtradas} onOpen={abrir} />}
 
       {dialogAberto && (
         <TaskDialog

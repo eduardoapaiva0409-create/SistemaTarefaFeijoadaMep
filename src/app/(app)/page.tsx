@@ -14,7 +14,7 @@ export default async function DashboardPage() {
     supabase.from("tasks").select(TASK_SELECT).order("ordem", { ascending: false }),
     supabase
       .from("profiles")
-      .select("id, nome, cargo")
+      .select("id, nome, funcao")
       .eq("ativo", true)
       .order("nome"),
   ]);

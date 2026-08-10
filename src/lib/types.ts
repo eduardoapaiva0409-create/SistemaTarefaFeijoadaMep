@@ -1,6 +1,18 @@
 // Tipos do banco escritos à mão (espelham supabase/migrations/).
 
 export type Papel = "admin" | "colaborador";
+export type Funcao = "coordenacao" | "apoio" | "conselheiro";
+export type Setor =
+  | "coordenacao"
+  | "secretaria"
+  | "tesouraria"
+  | "marketing"
+  | "infraestrutura"
+  | "decoracao"
+  | "tios"
+  | "entretenimento"
+  | "bebidas"
+  | "delivery";
 export type TaskStatus = "a_fazer" | "em_andamento" | "concluida";
 export type Prioridade = "baixa" | "media" | "alta" | "urgente";
 export type Recorrencia = "diaria" | "semanal" | "quinzenal" | "mensal";
@@ -16,14 +28,18 @@ export type Profile = {
   id: string;
   nome: string;
   email: string | null;
-  cargo: string | null;
+  funcao: Funcao | null;
   papel: Papel;
+  setor: Setor | null;
+  foto_url: string | null;
+  /** false = pessoa só registrada (função/setor/foto), sem login no sistema. */
+  tem_acesso: boolean;
   ativo: boolean;
   created_at: string;
 };
 
 /** Resumo de perfil que vem embedado nas tarefas via PostgREST. */
-export type ProfileRef = Pick<Profile, "id" | "nome" | "cargo">;
+export type ProfileRef = Pick<Profile, "id" | "nome" | "funcao" | "foto_url">;
 
 export type TaskItem = {
   id: string;
@@ -52,6 +68,8 @@ export type Task = {
   descricao: string | null;
   status: TaskStatus;
   prioridade: Prioridade;
+  /** Opcional — só para agrupar/filtrar por frente de trabalho. */
+  setor: Setor | null;
   responsavel_id: string | null;
   criado_por: string | null;
   prazo: string | null;

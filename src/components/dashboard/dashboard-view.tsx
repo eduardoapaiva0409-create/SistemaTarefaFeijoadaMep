@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { UserAvatar } from "@/components/user-avatar";
 import { AtividadeChart } from "@/components/dashboard/atividade-chart";
+import { EventCountdown } from "@/components/dashboard/event-countdown";
 import { TaskDialog } from "@/components/tasks/task-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,8 @@ export function DashboardView({
           Nova tarefa
         </Button>
       </PageHeader>
+
+      <EventCountdown />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
@@ -184,7 +187,11 @@ export function DashboardView({
                       key={pessoa.id ?? "sem"}
                       className="flex items-center gap-3 px-4 py-2.5"
                     >
-                      <UserAvatar nome={pessoa.id ? pessoa.nome : null} size="sm" />
+                      <UserAvatar
+                        nome={pessoa.id ? pessoa.nome : null}
+                        fotoUrl={pessoa.id ? pessoa.fotoUrl : null}
+                        size="sm"
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium">
                           {/* "Sem responsável" é rótulo, não nome de pessoa —
@@ -232,7 +239,11 @@ export function DashboardView({
                       onClick={() => abrir(task)}
                       className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-muted/50"
                     >
-                      <UserAvatar nome={task.responsavel?.nome} size="sm" />
+                      <UserAvatar
+                        nome={task.responsavel?.nome}
+                        fotoUrl={task.responsavel?.foto_url}
+                        size="sm"
+                      />
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
                         {task.titulo}
                       </span>

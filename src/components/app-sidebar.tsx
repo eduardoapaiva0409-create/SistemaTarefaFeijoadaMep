@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { PAPEL_LABELS } from "@/lib/format";
+import { FUNCAO_LABELS, PAPEL_LABELS } from "@/lib/format";
 import type { Profile } from "@/lib/types";
 import { UserAvatar } from "@/components/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -43,15 +43,23 @@ export function AppSidebar({ profile }: { profile: Profile | null }) {
 
   return (
     <aside className="hidden md:flex w-60 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:sticky md:top-0 md:h-dvh md:self-start">
-      <div className="px-6 pt-8 pb-6">
+      <div className="flex items-center gap-3 px-6 pt-8 pb-6">
         <Image
-          src="/logo-autorio.jpg"
-          alt="AutoRio — Funilaria e Pintura"
-          width={1000}
-          height={485}
+          src="/logo-escalada.jpg"
+          alt="Escalada"
+          width={96}
+          height={96}
           priority
-          className="w-full"
+          className="size-11 shrink-0 rounded-xl object-cover ring-1 ring-white/10"
         />
+        <div className="min-w-0">
+          <p className="truncate text-[15px] font-semibold tracking-tight text-white">
+            Feijoada
+          </p>
+          <p className="truncate text-[11px] font-medium text-white/50">
+            do Escalada
+          </p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
@@ -85,6 +93,7 @@ export function AppSidebar({ profile }: { profile: Profile | null }) {
           <div className="flex items-center gap-3 rounded-lg px-3 py-2">
             <UserAvatar
               nome={profile.nome}
+              fotoUrl={profile.foto_url}
               size="sm"
               className="bg-white/12 text-white ring-white/15"
             />
@@ -93,7 +102,9 @@ export function AppSidebar({ profile }: { profile: Profile | null }) {
                 {profile.nome}
               </p>
               <p className="truncate text-xs text-white/50">
-                {profile.cargo ?? PAPEL_LABELS[profile.papel]}
+                {profile.funcao
+                  ? FUNCAO_LABELS[profile.funcao]
+                  : PAPEL_LABELS[profile.papel]}
               </p>
             </div>
           </div>
@@ -117,14 +128,19 @@ export function MobileHeader() {
     <header
       className="sticky top-0 z-30 flex items-center justify-between bg-sidebar px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] text-sidebar-foreground md:hidden"
     >
-      <Image
-        src="/logo-autorio.jpg"
-        alt="AutoRio — Funilaria e Pintura"
-        width={1000}
-        height={485}
-        priority
-        className="h-10 w-auto"
-      />
+      <div className="flex items-center gap-2.5">
+        <Image
+          src="/logo-escalada.jpg"
+          alt="Escalada"
+          width={96}
+          height={96}
+          priority
+          className="size-8 rounded-lg object-cover ring-1 ring-white/10"
+        />
+        <span className="text-[15px] font-semibold tracking-tight text-white">
+          Feijoada do Escalada
+        </span>
+      </div>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={

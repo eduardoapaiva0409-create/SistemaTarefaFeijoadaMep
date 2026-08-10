@@ -15,6 +15,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import {
   PRIORIDADE_LABELS,
+  SETOR_LABELS,
   STATUS_LABELS,
   STATUS_ORDER,
   primeiroNome,
@@ -144,6 +145,11 @@ export function TaskCard({
               {labelPrazoTask(task)}
             </span>
           )}
+          {task.setor && (
+            <Badge variant="outline" className="font-normal">
+              {SETOR_LABELS[task.setor]}
+            </Badge>
+          )}
           {task.recorrencia && (
             <Repeat
               className="size-3.5 text-muted-foreground/70"
@@ -154,7 +160,11 @@ export function TaskCard({
 
         <div className="mt-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-            <UserAvatar nome={task.responsavel?.nome} size="sm" />
+            <UserAvatar
+              nome={task.responsavel?.nome}
+              fotoUrl={task.responsavel?.foto_url}
+              size="sm"
+            />
             <span className="truncate">
               {task.responsavel
                 ? primeiroNome(task.responsavel.nome)

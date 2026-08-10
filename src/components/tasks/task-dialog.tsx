@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import {
   PRIORIDADE_LABELS,
   RECORRENCIA_LABELS,
+  SETOR_LABELS,
+  SETOR_ORDER,
   STATUS_LABELS,
   STATUS_ORDER,
 } from "@/lib/format";
@@ -15,6 +17,7 @@ import type {
   Prioridade,
   ProfileRef,
   Recorrencia,
+  Setor,
   TaskEvent,
   TaskItem,
   TaskStatus,
@@ -50,6 +53,7 @@ import { TaskActivity } from "@/components/tasks/task-activity";
 /** Base UI não aceita "" como valor de item — sentinela para "nenhum". */
 const SEM_RESPONSAVEL = "__none__";
 const SEM_RECORRENCIA = "__nao__";
+const SEM_SETOR = "__none__";
 
 const STATUS_ITEMS = STATUS_ORDER.map((v) => ({
   value: v,
@@ -59,6 +63,11 @@ const STATUS_ITEMS = STATUS_ORDER.map((v) => ({
 const PRIORIDADE_ITEMS = (
   ["urgente", "alta", "media", "baixa"] as Prioridade[]
 ).map((v) => ({ value: v, label: PRIORIDADE_LABELS[v] }));
+
+const SETOR_ITEMS = [
+  { value: SEM_SETOR, label: "Sem setor" },
+  ...SETOR_ORDER.map((v) => ({ value: v, label: SETOR_LABELS[v] })),
+];
 
 const RECORRENCIA_ITEMS = [
   { value: SEM_RECORRENCIA, label: "Não repete" },
@@ -102,6 +111,7 @@ export function TaskDialog({
   const [responsavelId, setResponsavelId] = useState(
     task?.responsavel_id ?? SEM_RESPONSAVEL
   );
+  const [setor, setSetor] = useState<string>(task?.setor ?? SEM_SETOR);
   const [prazo, setPrazo] = useState(task?.prazo ?? "");
   const [recorrencia, setRecorrencia] = useState<string>(
     task?.recorrencia ?? SEM_RECORRENCIA
@@ -133,7 +143,7 @@ export function TaskDialog({
           .order("ordem"),
         supabase
           .from("task_events")
-          .select("*, autor:profiles!autor_id (id, nome, cargo)")
+          .select("*, autor:profiles!autor_id (id, nome, funcao, foto_url)")
           .eq("task_id", task.id)
           .order("created_at", { ascending: false }),
       ]);
@@ -160,7 +170,7 @@ export function TaskDialog({
     const supabase = createClient();
     const { data } = await supabase
       .from("task_events")
-      .select("*, autor:profiles!autor_id (id, nome, cargo)")
+      .select("*, autor:profiles!autor_id (id, nome, funcao, foto_url)")
       .eq("task_id", task.id)
       .order("created_at", { ascending: false });
     setEventos((data ?? []) as TaskEvent[]);
@@ -178,6 +188,7 @@ export function TaskDialog({
       status,
       prioridade,
       responsavel_id: responsavelId === SEM_RESPONSAVEL ? null : responsavelId,
+      setor: setor === SEM_SETOR ? null : (setor as Setor),
       prazo: prazo || null,
       recorrencia: recorrencia === SEM_RECORRENCIA ? null : recorrencia,
     };
@@ -429,6 +440,30 @@ export function TaskDialog({
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="grid gap-2">
+        <Label>Setor</Label>
+        <Select
+          items={SETOR_ITEMS}
+          value={setor}
+          onValueChange={(v) => setSetor(v as string)}
+          disabled={!podeEditar}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SETOR_ITEMS.map((item) => (
+              <SelectItem key={item.value} value={item.value}>
+                {item.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          Opcional — serve só para agrupar e filtrar por frente de trabalho.
+        </p>
       </div>
 
       <div className="grid gap-2 rounded-lg border border-input bg-muted/30 p-3">

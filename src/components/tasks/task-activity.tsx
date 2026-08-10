@@ -118,7 +118,11 @@ export function TaskActivity({
             if (evento.tipo === "comentario") {
               return (
                 <li key={evento.id} className="group flex gap-2.5">
-                  <UserAvatar nome={evento.autor?.nome} size="sm" />
+                  <UserAvatar
+                    nome={evento.autor?.nome}
+                    fotoUrl={evento.autor?.foto_url}
+                    size="sm"
+                  />
                   <div className="min-w-0 flex-1 rounded-lg bg-muted/60 px-3 py-2">
                     <div className="flex items-baseline gap-2">
                       <span className="text-[13px] font-medium">{autor}</span>

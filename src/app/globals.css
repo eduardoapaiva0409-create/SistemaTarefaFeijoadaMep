@@ -51,26 +51,30 @@
 }
 
 :root {
-  --brand-navy: #1d3e5d;
-  --brand-gold: #c9a24b;
+  /* Marca Feijoada do Escalada: charcoal-navy da silhueta do escalador na logo
+     (#242c39) + dourado quente extraído do gradiente pôr do sol (vermelho→
+     amarelo). O vermelho/amarelo vivos da logo ficam só na própria imagem —
+     usados diretamente na UI, brigariam com o semáforo destructive/warning. */
+  --brand-navy: #242c39;
+  --brand-gold: #d89531;
   --background: #f5f5f7;
   --foreground: #1d1d1f;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: #1d3e5d;
+  --primary: #242c39;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
-  --secondary-foreground: #1d3e5d;
+  --secondary-foreground: #242c39;
   --muted: oklch(0.97 0 0);
   --muted-foreground: #6e6e73;
   --accent: oklch(0.97 0 0);
-  --accent-foreground: #1d3e5d;
+  --accent-foreground: #242c39;
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: #8aa5bd;
+  --ring: #96a2b6;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -81,26 +85,26 @@
   --chart-concluida: #2a78d6;
   --chart-criada: #b9bec4;
   --radius: 0.75rem;
-  --sidebar: #1d3e5d;
+  --sidebar: #242c39;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #c9a24b;
-  --sidebar-primary-foreground: #1d3e5d;
+  --sidebar-primary: #d89531;
+  --sidebar-primary-foreground: #242c39;
   --sidebar-accent: rgba(255, 255, 255, 0.1);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #8aa5bd;
+  --sidebar-ring: #96a2b6;
 }
 
 .dark {
-  --brand-navy: #1d3e5d;
-  --brand-gold: #d4b05e;
+  --brand-navy: #242c39;
+  --brand-gold: #e6a84c;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: #35618c;
+  --primary: #49586e;
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -119,14 +123,14 @@
   --chart-5: oklch(0.269 0 0);
   --chart-concluida: #3987e5;
   --chart-criada: #5a6068;
-  --sidebar: #1d3e5d;
+  --sidebar: #242c39;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #d4b05e;
-  --sidebar-primary-foreground: #1d3e5d;
+  --sidebar-primary: #e6a84c;
+  --sidebar-primary-foreground: #242c39;
   --sidebar-accent: rgba(255, 255, 255, 0.1);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #8aa5bd;
+  --sidebar-ring: #96a2b6;
 }
 
 @layer base {
