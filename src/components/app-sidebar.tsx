@@ -15,11 +15,21 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LayoutDashboard, ListChecks, LogOut, Menu, Users } from "lucide-react";
+import {
+  CalendarClock,
+  FolderOpen,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  Menu,
+  Users,
+} from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Início", icon: LayoutDashboard },
   { href: "/tarefas", label: "Tarefas", icon: ListChecks },
+  { href: "/programacao", label: "Programação", icon: CalendarClock },
+  { href: "/materiais", label: "Materiais", icon: FolderOpen },
   { href: "/equipe", label: "Equipe", icon: Users },
 ];
 

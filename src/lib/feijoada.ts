@@ -1,4 +1,4 @@
-// Constantes e lógica de fase da Feijoada do Escalada — evento único, 13/09/2026.
+// Constantes e lógica de fase da Feijoada do Escalada — evento único, 29/11/2026.
 // "Fase" é derivada do `prazo` da tarefa comparado à data do evento; não
 // existe coluna nova no banco. Nome do módulo é "feijoada", não "evento" —
 // esse nome já é usado pelo histórico/timeline da tarefa (EventoTipo,
@@ -7,7 +7,7 @@
 import { diasAtePrazo, parseDate, todayISO } from "@/lib/format";
 
 export const FEIJOADA_NOME = "Feijoada do Escalada";
-export const FEIJOADA_DATA = "2026-09-13";
+export const FEIJOADA_DATA = "2026-11-29";
 
 export type Fase =
   | "preparacao"
@@ -68,4 +68,15 @@ export function diasParaFeijoada(): number {
 /** Fase em que a organização está HOJE (não a de uma tarefa específica). */
 export function faseAtual(): Fase {
   return calcularFase(todayISO());
+}
+
+/** "Domingo, 29 de novembro" — cabeçalho da programação. */
+export function dataExtensoFeijoada(): string {
+  const data = parseDate(FEIJOADA_DATA)!;
+  const texto = data.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }

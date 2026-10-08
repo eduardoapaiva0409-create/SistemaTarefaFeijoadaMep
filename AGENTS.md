@@ -11,10 +11,12 @@ Delegação e acompanhamento de tarefas da organização da Feijoada do Escalada
 stack, mesmo design system, **banco Supabase próprio e separado** — nenhum
 dado do projeto original é reaproveitado.
 
-**Escopo: exclusivamente tarefas.** Delegar, acompanhar e concluir tarefas da
-organização do evento (compras, logística, equipe). Não é sistema financeiro
-nem controle de convidados/vendas de ingresso — se isso vier a existir, é
-sistema separado, como no projeto original.
+**Escopo: a organização do evento.** Delegar, acompanhar e concluir tarefas
+(compras, logística, equipe), montar a **programação do dia** e guardar os
+**materiais de divulgação** do marketing. Evento único: 29/11/2026
+(`FEIJOADA_DATA` em `src/lib/feijoada.ts` — contador e fases saem dali). Não
+é sistema financeiro nem controle de convidados/vendas de ingresso — se isso
+vier a existir, é sistema separado, como no projeto original.
 
 ## Stack
 
@@ -72,7 +74,7 @@ sistema separado, como no projeto original.
   o SQL é aplicado pelo MCP do Supabase (`apply_migration`, configurado em
   `.mcp.json`) ou manualmente no SQL Editor do painel. Ao aplicar por MCP,
   versionar o mesmo SQL em `supabase/migrations/`.
-- Quatro tabelas: `tasks` no centro, ligada a `profiles` por duas FKs
+- Tarefas: quatro tabelas, `tasks` no centro, ligada a `profiles` por duas FKs
   (`responsavel_id`, `criado_por`, ambas `on delete set null` — tirar a pessoa
   preserva a tarefa), e `task_items` (checklist) + `task_events`
   (comentários **e** histórico na mesma linha do tempo), ambas
@@ -104,6 +106,54 @@ sistema separado, como no projeto original.
 - RLS: todos os autenticados **leem** tudo (a organização precisa enxergar o
   quadro); escrita em `tasks` só para admin, responsável ou criador
   (`pode_editar_task`).
+- **RLS não dá erro quando barra um delete/update** — só afeta zero linhas.
+  Onde a tela precisa saber se apagou (bloco, material, pasta), a query leva
+  `.select("id")` e confere se voltou linha.
+
+## Programação (0008)
+
+Cronograma do dia do evento, inspirado na Programação do Organizacional
+Riveria. `blocos` + `bloco_events` (mesmo desenho de `tasks`/`task_events`).
+
+- **O horário não é gravado, é calculado** (`montarAgenda` em
+  `src/lib/programacao.ts`): cada bloco começa quando o anterior termina.
+  Mudar uma duração reacomoda o dia inteiro. Não criar coluna de horário.
+- `inicio_fixo` é a **âncora** (hora marcada que não desliza). Ela reinicia a
+  cascata; se a fila chega depois dela, a tela mostra o conflito em vez de
+  empurrar o compromisso.
+- `ordem` aqui é **ASC** (o dia lê de cima para baixo), ao contrário do
+  kanban — por isso `ordemNaFila` é o espelho de `calcularOrdem`.
+- Histórico por trigger (`log_bloco_changes`): título, duração (gravada em
+  minutos crus), hora marcada, responsável e formato. **Arrastar não entra**
+  — ensaiar o cronograma são dezenas de arrastos.
+- RLS: qualquer autenticado cria e edita (o cronograma é feito a várias
+  mãos); apagar é do admin ou de quem criou.
+- Como no kanban, arrastar é HTML5 e não existe no toque: o menu `⋮` do card
+  tem Subir/Descer e ±5 min, que são o caminho no celular.
+- `ActivityTimeline` (`src/components/activity-timeline.tsx`) é a linha do
+  tempo genérica de comentários + histórico; `TaskActivity` e `BlocoActivity`
+  só fornecem a frase de cada tipo de mudança.
+
+## Materiais (0009)
+
+Pasta compartilhada do marketing: vídeos, imagens, artes. Arquivo no bucket
+`materiais` do Storage; a tabela `materiais` guarda nome original, pasta
+(`material_pastas`, um nível só), descrição e quem enviou.
+
+- Bucket **público para leitura** (o link abre sem login — é para mandar no
+  WhatsApp); **listar** só autenticado. Caminho `<uuid>/<nome-sem-acento>`;
+  mover de pasta mexe só em `pasta_id`, o arquivo não sai do lugar.
+- O upload é **XHR** (`enviarMaterial` em `src/lib/materiais.ts`), não
+  `supabase.storage.upload()`: o supabase-js não informa progresso, e vídeo
+  sem barra parece travado. É o mesmo POST que ele faz.
+- No envio, o navegador gera uma **miniatura** JPEG de ~480px (imagem, ou um
+  quadro do vídeo) em `<uuid>/miniatura.jpg`. A grade carrega só ela — foto
+  de celular tem 5–10 MB. Formato que o navegador não decodifica (HEIC no
+  Chrome) fica sem miniatura e a grade cai para ícone.
+- Excluir: **primeiro a linha** (RLS confere quem pode), depois o Storage.
+- Limite de tamanho é o global do projeto (Storage → Settings): **50 MB por
+  arquivo no plano Free**, até 500 GB no Pro. O bucket não define limite
+  próprio.
 
 ## PWA / celular
 
