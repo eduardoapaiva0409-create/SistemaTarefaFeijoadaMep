@@ -1,0 +1,30 @@
+name: CI
+
+# Roda em todo PR contra o main. O job se chama "build" porque é esse nome
+# que vira o status check exigido pela proteção de branch — mudou o nome
+# do job, tem que atualizar o `contexts` da proteção também (ver README).
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Valores públicos (NEXT_PUBLIC_*) só para o build conseguir rodar sem
+    # banco de verdade — nenhuma rota é pré-renderizada com dado real (ver
+    # Route (app) do build: tudo "ƒ", nada "○"), então isso nunca bate no
+    # Supabase. Nunca colocar a service_role aqui.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build # também confere os tipos (ver AGENTS.md)
