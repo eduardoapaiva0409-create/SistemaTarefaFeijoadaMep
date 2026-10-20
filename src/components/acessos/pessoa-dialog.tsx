@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { criarPessoa, redefinirSenha } from "@/app/(app)/equipe/actions";
+import { criarPessoa, redefinirSenha } from "@/app/(app)/acessos/actions";
 import { createClient } from "@/lib/supabase/client";
 import {
   FUNCAO_LABELS,
@@ -143,7 +143,7 @@ export function PessoaDialog({
           description:
             temAcesso === "sim"
               ? `${nome} já pode entrar com esse e-mail e senha.`
-              : `${nome} está no time, sem login no sistema.`,
+              : `${nome} já pode ser responsável por tarefas, sem login no sistema.`,
         }
       );
     } else {
@@ -194,7 +194,7 @@ export function PessoaDialog({
           <DialogDescription>
             {editando
               ? "Função, setor, permissão e situação do acesso."
-              : "Registra a pessoa no time — login é opcional."}
+              : "Cria o login de alguém da organização."}
           </DialogDescription>
         </DialogHeader>
 
@@ -260,7 +260,7 @@ export function PessoaDialog({
               <p className="text-xs text-muted-foreground">
                 {temAcesso === "sim"
                   ? "Essa pessoa entra com e-mail e senha próprios."
-                  : "Sem login — fica registrada só com nome, função, setor e foto. Alguns participantes não vão usar o sistema, e tudo bem."}
+                  : "Sem login — serve para pôr como responsável de tarefa alguém que não vai usar o sistema. Para só mostrar quem está na organização, use a tela Equipe."}
               </p>
             </div>
           )}
@@ -377,7 +377,7 @@ export function PessoaDialog({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Organizador(a) edita qualquer tarefa e gerencia o time.
+                  Organizador(a) edita qualquer tarefa e gerencia os acessos.
                 </p>
               </div>
             )}

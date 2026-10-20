@@ -164,6 +164,24 @@ export function GridSkeleton() {
   );
 }
 
+/** Espelho da equipe: o card largo da Coordenação e a grade de setores. */
+export function SetoresSkeleton() {
+  return (
+    <div>
+      <PageHeaderSkeleton />
+
+      <Skeleton className="h-[130px] rounded-xl sm:h-[98px]" />
+
+      <Skeleton className="mt-8 mb-3 h-4 w-16" />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 9 }).map((_, i) => (
+          <Skeleton key={i} className="h-[130px] rounded-xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function PageHeaderSkeleton() {
   return (
     <div className="mb-6 flex items-center justify-between gap-4">

@@ -177,3 +177,18 @@ export type MaterialWithRelations = Material & {
   urlDownload: string;
   urlMiniatura: string | null;
 };
+
+// ── Equipe ──────────────────────────────────────────────────────────────────
+
+/** O organograma de cada setor só tem coordenação e apoio. */
+export type MembroFuncao = Extract<Funcao, "coordenacao" | "apoio">;
+
+/** Quem participa da organização. Não é login — ver 0010_equipe.sql. */
+export type EquipeMembro = {
+  id: string;
+  nome: string;
+  setor: Setor;
+  funcao: MembroFuncao;
+  criado_por: string | null;
+  created_at: string;
+};

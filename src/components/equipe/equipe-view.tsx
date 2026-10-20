@@ -3,326 +3,319 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Plus, Trash2 } from "lucide-react";
-import { excluirPessoa } from "@/app/(app)/equipe/actions";
-import {
-  FUNCAO_LABELS,
-  FUNCAO_ORDER,
-  PAPEL_LABELS,
-  SETOR_LABELS,
-  SETOR_ORDER,
-} from "@/lib/format";
-import { isAtrasada } from "@/lib/tasks";
-import type { Profile, TaskWithRelations } from "@/lib/types";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ChevronRight } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { SETOR_LABELS, SETOR_ORDER, plural, primeiroNome } from "@/lib/format";
+import type { EquipeMembro, MembroFuncao, Setor } from "@/lib/types";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/page-header";
-import { PessoaDialog } from "@/components/equipe/pessoa-dialog";
+import { SetorSelo } from "@/components/equipe/setor-icone";
+import { SetorDialog, type CamposMembro } from "@/components/equipe/setor-dialog";
 import { UserAvatar } from "@/components/user-avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 
-/** Sentinela do "não atribuído" — vale para os dois filtros. */
-const SEM = "__sem__";
+type Organograma = Record<Setor, Record<MembroFuncao, EquipeMembro[]>>;
 
-const SETOR_FILTROS = [
-  { value: "todos", label: "Todo setor" },
-  ...SETOR_ORDER.map((v) => ({ value: v, label: SETOR_LABELS[v] })),
-  { value: SEM, label: "Sem setor" },
-];
+/** A Coordenação coordena as outras frentes: fica em cima, de largura cheia. */
+const SETOR_DO_TOPO: Setor = "coordenacao";
+const FRENTES = SETOR_ORDER.filter((s) => s !== SETOR_DO_TOPO);
 
-const FUNCAO_FILTROS = [
-  { value: "todos", label: "Toda função" },
-  ...FUNCAO_ORDER.map((v) => ({ value: v, label: FUNCAO_LABELS[v] })),
-  { value: SEM, label: "Sem função" },
-];
+/** Avatares no card antes do "+N". */
+const MAX_PILHA = 3;
 
-/** Posição do setor na ordem de exibição; sem setor sempre por último. */
-function ordemSetor(setor: Profile["setor"]): number {
-  if (!setor) return SETOR_ORDER.length;
-  const i = SETOR_ORDER.indexOf(setor);
-  return i === -1 ? SETOR_ORDER.length : i;
+/** Agrupa por setor e função, na ordem de inclusão. */
+function montarOrganograma(membros: EquipeMembro[]): Organograma {
+  const organograma = Object.fromEntries(
+    SETOR_ORDER.map((s) => [s, { coordenacao: [], apoio: [] }])
+  ) as unknown as Organograma;
+  // O otimista entra no fim da lista e a reinclusão do "Desfazer" volta com
+  // a data original — a ordem sai daqui, não da posição no array.
+  const ordenados = [...membros].sort((a, b) =>
+    a.created_at.localeCompare(b.created_at)
+  );
+  for (const membro of ordenados) {
+    organograma[membro.setor]?.[membro.funcao]?.push(membro);
+  }
+  return organograma;
 }
 
+/**
+ * Equipe: o organograma da organização. Não é cadastro de acesso (isso é a
+ * tela Acessos) — é só quem participa, por setor, em coordenação e apoio.
+ */
 export function EquipeView({
-  pessoas,
-  tasks,
+  membros: membrosIniciais,
   meuId,
   souAdmin,
 }: {
-  pessoas: Profile[];
-  tasks: TaskWithRelations[];
+  membros: EquipeMembro[];
   meuId: string;
   souAdmin: boolean;
 }) {
   const router = useRouter();
-  const [dialogAberto, setDialogAberto] = useState(false);
-  const [emEdicao, setEmEdicao] = useState<Profile | null>(null);
-  const [paraExcluir, setParaExcluir] = useState<Profile | null>(null);
-  const [filtroSetor, setFiltroSetor] = useState("todos");
-  const [filtroFuncao, setFiltroFuncao] = useState("todos");
 
-  const pessoasOrdenadas = useMemo(() => {
-    return [...pessoas]
-      .filter((p) => {
-        if (filtroSetor === SEM && p.setor) return false;
-        if (filtroSetor !== "todos" && filtroSetor !== SEM) {
-          if (p.setor !== filtroSetor) return false;
-        }
-        if (filtroFuncao === SEM && p.funcao) return false;
-        if (filtroFuncao !== "todos" && filtroFuncao !== SEM) {
-          if (p.funcao !== filtroFuncao) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        const os = ordemSetor(a.setor) - ordemSetor(b.setor);
-        if (os !== 0) return os;
-        return a.nome.localeCompare(b.nome, "pt-BR");
-      });
-  }, [pessoas, filtroSetor, filtroFuncao]);
-
-  const contagem = new Map<string, { abertas: number; atrasadas: number }>();
-  for (const task of tasks) {
-    if (!task.responsavel_id || task.status === "concluida") continue;
-    const atual = contagem.get(task.responsavel_id) ?? {
-      abertas: 0,
-      atrasadas: 0,
-    };
-    atual.abertas += 1;
-    if (isAtrasada(task)) atual.atrasadas += 1;
-    contagem.set(task.responsavel_id, atual);
+  // Espelho local para a vaga preenchida aparecer na hora — mesmo padrão do
+  // tasks-view: ajuste durante o render, não num efeito.
+  const [membros, setMembros] = useState(membrosIniciais);
+  const [ultimosDoServidor, setUltimosDoServidor] = useState(membrosIniciais);
+  if (membrosIniciais !== ultimosDoServidor) {
+    setUltimosDoServidor(membrosIniciais);
+    setMembros(membrosIniciais);
   }
 
-  async function confirmarExclusao() {
-    if (!paraExcluir) return;
-    const resultado = await excluirPessoa(paraExcluir.id);
-    if (!resultado.ok) {
-      toast.error("Não foi possível excluir", { description: resultado.erro });
+  const [setorAberto, setSetorAberto] = useState<Setor | null>(null);
+
+  const organograma = useMemo(() => montarOrganograma(membros), [membros]);
+  const semCoordenacao = SETOR_ORDER.filter(
+    (s) => organograma[s].coordenacao.length === 0
+  ).length;
+
+  async function adicionar(setor: Setor, funcao: MembroFuncao, nome: string) {
+    // O id nasce aqui para a linha otimista e a do banco serem a mesma.
+    const novo: EquipeMembro = {
+      id: crypto.randomUUID(),
+      nome,
+      setor,
+      funcao,
+      criado_por: meuId,
+      created_at: new Date().toISOString(),
+    };
+    setMembros((atual) => [...atual, novo]);
+
+    const supabase = createClient();
+    const { error } = await supabase.from("equipe_membros").insert({
+      id: novo.id,
+      nome,
+      setor,
+      funcao,
+      criado_por: meuId,
+    });
+
+    if (error) {
+      setMembros((atual) => atual.filter((m) => m.id !== novo.id));
+      toast.error(`Não foi possível incluir ${nome}`, {
+        description: error.message,
+      });
       return;
     }
-    toast.success("Acesso removido");
-    setParaExcluir(null);
     router.refresh();
   }
 
+  async function atualizar(membro: EquipeMembro, campos: CamposMembro) {
+    const anterior = membros;
+    setMembros((atual) =>
+      atual.map((m) => (m.id === membro.id ? { ...m, ...campos } : m))
+    );
+
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("equipe_membros")
+      .update(campos)
+      .eq("id", membro.id)
+      .select("id");
+
+    if (error || !data?.length) {
+      setMembros(anterior);
+      toast.error("Não foi possível salvar", {
+        description: error?.message ?? "Alguém já tinha tirado essa pessoa da equipe.",
+      });
+      return;
+    }
+
+    // Trocar de setor tira a pessoa da tela aberta — o toast diz para onde foi.
+    if (campos.setor) {
+      toast.success(`${primeiroNome(membro.nome)} foi para ${SETOR_LABELS[campos.setor]}`);
+    }
+    router.refresh();
+  }
+
+  async function tirar(membro: EquipeMembro) {
+    setMembros((atual) => atual.filter((m) => m.id !== membro.id));
+
+    const supabase = createClient();
+    // Sem permissão o RLS não dá erro, só não apaga — o `select` conta.
+    const { data, error } = await supabase
+      .from("equipe_membros")
+      .delete()
+      .eq("id", membro.id)
+      .select("id");
+
+    if (error || !data?.length) {
+      setMembros((atual) => [...atual, membro]);
+      toast.error("Não foi possível tirar da equipe", {
+        description:
+          error?.message ?? "Só quem incluiu a pessoa ou um admin pode tirá-la.",
+      });
+      return;
+    }
+
+    toast.success(`${membro.nome} saiu da equipe`, {
+      action: { label: "Desfazer", onClick: () => devolver(membro) },
+    });
+    router.refresh();
+  }
+
+  /** O "Desfazer": volta com o mesmo id e a mesma data, no mesmo lugar. */
+  async function devolver(membro: EquipeMembro) {
+    setMembros((atual) => [...atual, membro]);
+
+    const supabase = createClient();
+    const { error } = await supabase.from("equipe_membros").insert(membro);
+
+    if (error) {
+      setMembros((atual) => atual.filter((m) => m.id !== membro.id));
+      toast.error(`Não foi possível devolver ${membro.nome}`, {
+        description: error.message,
+      });
+      return;
+    }
+    router.refresh();
+  }
+
+  const descricao = [
+    membros.length > 0
+      ? `${plural(membros.length, "pessoa", "pessoas")} na organização, setor por setor`
+      : "Quem faz parte da organização, setor por setor",
+    semCoordenacao > 0 &&
+      plural(semCoordenacao, "setor sem coordenação", "setores sem coordenação"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <div>
-      <PageHeader
-        title="Equipe"
-        description="Quem tem acesso ao sistema e a carga de cada um."
-      >
-        {souAdmin && (
-          <Button
-            onClick={() => {
-              setEmEdicao(null);
-              setDialogAberto(true);
-            }}
-          >
-            <Plus className="size-4" />
-            Nova pessoa
-          </Button>
-        )}
-      </PageHeader>
+      <PageHeader title="Equipe" description={`${descricao}.`} />
 
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <Select
-          items={FUNCAO_FILTROS}
-          value={filtroFuncao}
-          onValueChange={(v) => setFiltroFuncao(v as string)}
-        >
-          <SelectTrigger className="w-full sm:w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FUNCAO_FILTROS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select
-          items={SETOR_FILTROS}
-          value={filtroSetor}
-          onValueChange={(v) => setFiltroSetor(v as string)}
-        >
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SETOR_FILTROS.map((item) => (
-              <SelectItem key={item.value} value={item.value}>
-                {item.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <span className="text-xs tabular-nums text-muted-foreground">
-          {pessoasOrdenadas.length} de {pessoas.length}
-        </span>
-      </div>
+      <SetorCard
+        setor={SETOR_DO_TOPO}
+        grupos={organograma[SETOR_DO_TOPO]}
+        largo
+        onAbrir={() => setSetorAberto(SETOR_DO_TOPO)}
+      />
 
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Pessoa</TableHead>
-                  <TableHead>Função</TableHead>
-                  <TableHead>Setor</TableHead>
-                  <TableHead>Permissão</TableHead>
-                  <TableHead className="text-right">Abertas</TableHead>
-                  <TableHead className="text-right">Atrasadas</TableHead>
-                  {souAdmin && (
-                    <TableHead className="w-24 text-right">Ações</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {pessoasOrdenadas.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={souAdmin ? 7 : 6}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      Nada por aqui ainda.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  pessoasOrdenadas.map((pessoa) => {
-                    const numeros = contagem.get(pessoa.id) ?? {
-                      abertas: 0,
-                      atrasadas: 0,
-                    };
-                    return (
-                      <TableRow key={pessoa.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-3">
-                            <UserAvatar nome={pessoa.nome} fotoUrl={pessoa.foto_url} />
-                            <div className="min-w-0">
-                              <p className="flex items-center gap-2 font-medium">
-                                {pessoa.nome}
-                                {pessoa.id === meuId && (
-                                  <span className="text-xs font-normal text-muted-foreground">
-                                    você
-                                  </span>
-                                )}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {pessoa.tem_acesso
-                                  ? (pessoa.email ?? "—")
-                                  : "Sem acesso ao sistema"}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {pessoa.funcao ? FUNCAO_LABELS[pessoa.funcao] : "—"}
-                        </TableCell>
-                        <TableCell>
-                          {pessoa.setor ? (
-                            <Badge variant="outline">
-                              {SETOR_LABELS[pessoa.setor]}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Badge
-                              variant={
-                                pessoa.papel === "admin" ? "default" : "outline"
-                              }
-                            >
-                              {PAPEL_LABELS[pessoa.papel]}
-                            </Badge>
-                            {!pessoa.ativo && (
-                              <Badge variant="secondary">Inativo</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {numeros.abertas}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums">
-                          {numeros.atrasadas > 0 ? (
-                            <span className="font-medium text-red-600 dark:text-red-400">
-                              {numeros.atrasadas}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">0</span>
-                          )}
-                        </TableCell>
-                        {souAdmin && (
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Editar ${pessoa.nome}`}
-                              onClick={() => {
-                                setEmEdicao(pessoa);
-                                setDialogAberto(true);
-                              }}
-                            >
-                              <Pencil className="size-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Excluir ${pessoa.nome}`}
-                              disabled={pessoa.id === meuId}
-                              onClick={() => setParaExcluir(pessoa)}
-                            >
-                              <Trash2 className="size-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+      <section className="mt-8">
+        <h2 className="mb-3 text-sm font-semibold tracking-tight text-muted-foreground">
+          Setores
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {FRENTES.map((setor) => (
+            <SetorCard
+              key={setor}
+              setor={setor}
+              grupos={organograma[setor]}
+              onAbrir={() => setSetorAberto(setor)}
+            />
+          ))}
+        </div>
+      </section>
 
-      {dialogAberto && (
-        <PessoaDialog
-          key={emEdicao?.id ?? "nova"}
-          open={dialogAberto}
-          onOpenChange={setDialogAberto}
-          pessoa={emEdicao}
+      {setorAberto && (
+        <SetorDialog
+          key={setorAberto}
+          setor={setorAberto}
+          grupos={organograma[setorAberto]}
+          podeTirar={(m) => souAdmin || m.criado_por === meuId}
+          onOpenChange={(aberto) => !aberto && setSetorAberto(null)}
+          onAdicionar={(funcao, nome) => adicionar(setorAberto, funcao, nome)}
+          onAtualizar={atualizar}
+          onTirar={tirar}
         />
       )}
+    </div>
+  );
+}
 
-      <ConfirmDialog
-        open={paraExcluir !== null}
-        onOpenChange={(aberto) => !aberto && setParaExcluir(null)}
-        title={`Excluir o acesso de ${paraExcluir?.nome}?`}
-        description="A pessoa perde o login. As tarefas dela continuam no sistema, mas ficam sem responsável."
-        confirmLabel="Excluir"
-        destructive
-        onConfirm={confirmarExclusao}
-      />
+function SetorCard({
+  setor,
+  grupos,
+  largo = false,
+  onAbrir,
+}: {
+  setor: Setor;
+  grupos: Record<MembroFuncao, EquipeMembro[]>;
+  /** O card do topo: as duas linhas lado a lado a partir do tablet. */
+  largo?: boolean;
+  onAbrir: () => void;
+}) {
+  const total = grupos.coordenacao.length + grupos.apoio.length;
+
+  return (
+    <Card
+      size="sm"
+      role="button"
+      tabIndex={0}
+      onClick={onAbrir}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onAbrir();
+        }
+      }}
+      className="cursor-pointer gap-3.5 px-4 outline-none transition-shadow hover:shadow-[0_1px_2px_rgba(0,0,0,0.05),0_10px_28px_rgba(0,0,0,0.08)] focus-visible:ring-3 focus-visible:ring-ring/50"
+    >
+      <div className="flex items-center gap-3">
+        <SetorSelo setor={setor} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-semibold tracking-tight">
+            {SETOR_LABELS[setor]}
+          </p>
+          <p className="text-xs tabular-nums text-muted-foreground">
+            {total > 0 ? plural(total, "pessoa", "pessoas") : "Ninguém ainda"}
+          </p>
+        </div>
+        <ChevronRight className="size-4 shrink-0 text-muted-foreground/50" />
+      </div>
+
+      <dl className={cn("grid grid-cols-1 gap-2", largo && "sm:grid-cols-2 sm:gap-6")}>
+        <Linha rotulo="Coordenação" membros={grupos.coordenacao} nomeCompleto />
+        <Linha rotulo="Apoio" membros={grupos.apoio} />
+      </dl>
+    </Card>
+  );
+}
+
+function Linha({
+  rotulo,
+  membros,
+  nomeCompleto = false,
+}: {
+  rotulo: string;
+  membros: EquipeMembro[];
+  /** Coordenação costuma ser uma ou duas pessoas: cabe o nome inteiro. */
+  nomeCompleto?: boolean;
+}) {
+  const visiveis = membros.slice(0, MAX_PILHA);
+  const resto = membros.length - visiveis.length;
+
+  return (
+    <div className="flex min-h-6 min-w-0 items-center gap-3">
+      <dt className="w-[5.5rem] shrink-0 text-xs text-muted-foreground">{rotulo}</dt>
+      <dd className="flex min-w-0 flex-1 items-center gap-2">
+        {membros.length === 0 ? (
+          <>
+            <span className="size-6 shrink-0 rounded-full border border-dashed border-muted-foreground/40" />
+            <span className="text-xs text-muted-foreground/80">Vaga em aberto</span>
+          </>
+        ) : (
+          <>
+            <span className="flex shrink-0 gap-1">
+              {visiveis.map((m) => (
+                <UserAvatar key={m.id} nome={m.nome} size="sm" />
+              ))}
+              {resto > 0 && (
+                <span className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium tabular-nums text-muted-foreground">
+                  +{resto}
+                </span>
+              )}
+            </span>
+            <span className="min-w-0 truncate text-sm">
+              {membros
+                .map((m) => (nomeCompleto ? m.nome : primeiroNome(m.nome)))
+                .join(", ")}
+            </span>
+          </>
+        )}
+      </dd>
     </div>
   );
 }
