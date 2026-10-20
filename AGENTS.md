@@ -62,7 +62,7 @@ vier a existir, é sistema separado, como no projeto original.
   não pode dizer "Atrasada 2 dias" nem liderar a ordenação. `labelPrazoTask`
   troca o rótulo por "Feita DD/MM" e `ordenarPorUrgencia` joga as concluídas
   para o fim. Mexeu em ordenação/rótulo de prazo, respeite isso.
-- Server Actions em `src/app/(app)/equipe/actions.ts` usam a **service_role**
+- Server Actions em `src/app/(app)/acessos/actions.ts` usam a **service_role**
   (`src/lib/supabase/admin.ts`) para criar acesso, trocar senha e excluir
   usuário — a Admin API do Auth não existe para o cliente anon. Toda ação
   revalida `is_admin` **no servidor** antes de agir; nunca confiar na UI.
@@ -101,8 +101,10 @@ vier a existir, é sistema separado, como no projeto original.
   (`FUNCAO_LABELS`/`FUNCAO_ORDER`, `SETOR_LABELS`/`SETOR_ORDER`).
 - `tasks.setor` (0007) é **opcional e só organizacional**: agrupa/filtra por
   frente de trabalho, não muda permissão nem entra no histórico de
-  `task_events`. A lista de setores está duplicada no check de `profiles.setor`
-  e no de `tasks.setor` — setor novo entra nos dois **e** em `SETOR_ORDER`.
+  `task_events`. A lista de setores está duplicada nos checks de
+  `profiles.setor`, `tasks.setor` e `equipe_membros.setor` — setor novo entra
+  nos três, em `SETOR_ORDER` **e** em `SETOR_ICONE`
+  (`src/components/equipe/setor-icone.tsx`).
 - RLS: todos os autenticados **leem** tudo (a organização precisa enxergar o
   quadro); escrita em `tasks` só para admin, responsável ou criador
   (`pode_editar_task`).
@@ -154,6 +156,30 @@ Pasta compartilhada do marketing: vídeos, imagens, artes. Arquivo no bucket
 - Limite de tamanho é o global do projeto (Storage → Settings): **50 MB por
   arquivo no plano Free**, até 500 GB no Pro. O bucket não define limite
   próprio.
+
+## Equipe (0010) × Acessos
+
+São duas telas e duas tabelas, de propósito:
+
+- **Acessos** (`/acessos`, tabela `profiles`): quem entra no sistema e pode
+  ser responsável de tarefa. É onde se cria login, troca senha e dá admin.
+- **Equipe** (`/equipe`, tabela `equipe_membros`): o organograma — quem
+  participa, por setor, em coordenação ou apoio. Só nome; **sem vínculo com
+  `profiles`** e sem login. A mesma pessoa pode estar nas duas, e ninguém tenta
+  casar uma com a outra. Não acrescentar e-mail/telefone: não é cadastro.
+
+- `equipe_membros.funcao` aceita só `coordenacao` | `apoio` (`MembroFuncao`).
+  Conselheiro existe em `profiles.funcao`, não no organograma.
+- O setor `coordenacao` é o card largo do topo (coordena as outras frentes);
+  os outros vão na grade abaixo.
+- Sem coluna de ordem: dentro do grupo vale `created_at`. O "Desfazer" de
+  tirar alguém reinsere a linha com o mesmo `id` e `created_at`, então ela
+  volta para o mesmo lugar.
+- Preencher é inline: a vaga tracejada vira campo, o Enter grava e deixa a
+  próxima vaga aberta (Enter vazio ou Esc encerra; sair do campo grava).
+- RLS: todo autenticado inclui e edita (cada coordenação preenche o seu
+  setor); tirar é de quem incluiu ou do admin. As linhas copiadas de
+  `profiles` na migration têm `criado_por` nulo — só o admin tira.
 
 ## PWA / celular
 

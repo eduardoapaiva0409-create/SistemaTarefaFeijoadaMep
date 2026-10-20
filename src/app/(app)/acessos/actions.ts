@@ -11,7 +11,7 @@ type Resultado = { ok: true } | { ok: false; erro: string };
 async function exigirAdmin(): Promise<string | null> {
   const eu = await getCurrentProfile();
   if (!eu) return "Sessão expirada. Entre novamente.";
-  if (eu.papel !== "admin") return "Só administradores podem gerenciar a equipe.";
+  if (eu.papel !== "admin") return "Só administradores podem gerenciar os acessos.";
   return null;
 }
 
@@ -69,7 +69,7 @@ export async function criarPessoa(input: {
     return { ok: false, erro: mensagem(erro) };
   }
 
-  revalidatePath("/equipe");
+  revalidatePath("/acessos");
   return { ok: true };
 }
 
@@ -112,6 +112,6 @@ export async function excluirPessoa(userId: string): Promise<Resultado> {
     return { ok: false, erro: mensagem(erro) };
   }
 
-  revalidatePath("/equipe");
+  revalidatePath("/acessos");
   return { ok: true };
 }

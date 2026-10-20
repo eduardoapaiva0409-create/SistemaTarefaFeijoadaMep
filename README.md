@@ -18,7 +18,7 @@ Este projeto ainda não tem um banco Supabase provisionado. Para rodar:
 1. **Novo projeto** em [supabase.com](https://supabase.com).
 2. **SQL Editor → New query**: rode todos os arquivos de
    [`supabase/migrations/`](supabase/migrations) **em ordem numérica**
-   (`0001_init.sql` → `0009_materiais.sql`), um por vez. A ordem importa: as
+   (`0001_init.sql` → `0010_equipe.sql`), um por vez. A ordem importa: as
    últimas alteram o que as primeiras criaram.
 3. **`.env.local`** (copie de `.env.local.example`):
    `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (publishable) e,
@@ -33,7 +33,7 @@ npm run dev          # http://localhost:3000
 ```
 
 A `SUPABASE_SERVICE_ROLE_KEY` é opcional: ela habilita criar acessos e trocar
-senhas pela tela **Equipe**. Sem ela o resto funciona igual, mas as pessoas
+senhas pela tela **Acessos**. Sem ela o resto funciona igual, mas as pessoas
 precisam ser cadastradas pelo painel do Supabase (Authentication → Users →
 Add user).
 
@@ -50,7 +50,8 @@ Add user).
 | Editar/concluir | qualquer uma | as suas (responsável ou criador) |
 | Excluir tarefa | qualquer uma | as que criou |
 | Comentar | sim | sim |
-| Gerenciar equipe | sim | não |
+| Gerenciar acessos (logins) | sim | não |
+| Montar a equipe (organograma) | sim | sim — tirar alguém, só quem incluiu |
 
 As regras valem no banco (RLS), não só na tela — não dá para burlar.
 
@@ -87,6 +88,18 @@ arraste os arquivos para a tela ou use **Enviar arquivos** (no celular, abre a
 galeria). Dá para organizar em pastas, buscar, filtrar por tipo, baixar com o
 nome original e copiar o link. **O link abre sem login**, então dá para mandar
 no WhatsApp. Excluir um arquivo é de quem enviou ou do admin.
+
+### Equipe
+
+O organograma da organização: a Coordenação em cima e cada setor num card,
+com quem está na coordenação e no apoio. Toque num setor para abrir; as vagas
+tracejadas são onde se escreve o próximo nome (Enter grava e já abre a vaga
+seguinte). Pelo menu ⋮ de cada pessoa dá para renomear, trocar entre
+coordenação e apoio, mover de setor ou tirar da equipe.
+
+A Equipe **não é a lista de logins**: quem entra no sistema fica em
+**Acessos**. Estar na equipe não dá acesso, e ter acesso não põe ninguém na
+equipe.
 
 **Limite de tamanho:** no plano Free do Supabase o máximo é **50 MB por
 arquivo** e **1 GB de armazenamento** no total. Vídeo maior que isso precisa do
@@ -129,7 +142,7 @@ primeiro deploy:
 |---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → Project Settings → API |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | idem (chave *publishable*) |
-| `SUPABASE_SERVICE_ROLE_KEY` | idem (*service role*) — opcional, só para a tela Equipe |
+| `SUPABASE_SERVICE_ROLE_KEY` | idem (*service role*) — opcional, só para a tela Acessos |
 
 Marque as três para **Production, Preview e Development**. Variável adicionada
 depois do deploy só vale no próximo — é preciso **Redeploy**.

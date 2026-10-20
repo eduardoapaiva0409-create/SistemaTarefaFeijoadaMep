@@ -2,8 +2,7 @@ import { redirect } from "next/navigation";
 import { EquipeView } from "@/components/equipe/equipe-view";
 import { getCurrentProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { TASK_SELECT } from "@/lib/tasks";
-import type { Profile, TaskWithRelations } from "@/lib/types";
+import type { EquipeMembro } from "@/lib/types";
 
 export const metadata = { title: "Equipe" };
 
@@ -12,15 +11,14 @@ export default async function EquipePage() {
   if (!profile) redirect("/login");
 
   const supabase = await createClient();
-  const [{ data: pessoas }, { data: tasks }] = await Promise.all([
-    supabase.from("profiles").select("*").order("nome"),
-    supabase.from("tasks").select(TASK_SELECT).neq("status", "concluida"),
-  ]);
+  const { data: membros } = await supabase
+    .from("equipe_membros")
+    .select("*")
+    .order("created_at");
 
   return (
     <EquipeView
-      pessoas={(pessoas ?? []) as Profile[]}
-      tasks={(tasks ?? []) as TaskWithRelations[]}
+      membros={(membros ?? []) as EquipeMembro[]}
       meuId={profile.id}
       souAdmin={profile.papel === "admin"}
     />

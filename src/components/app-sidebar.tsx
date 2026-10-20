@@ -18,6 +18,7 @@ import {
 import {
   CalendarClock,
   FolderOpen,
+  KeyRound,
   LayoutDashboard,
   ListChecks,
   LogOut,
@@ -31,6 +32,7 @@ const NAV_ITEMS = [
   { href: "/programacao", label: "Programação", icon: CalendarClock },
   { href: "/materiais", label: "Materiais", icon: FolderOpen },
   { href: "/equipe", label: "Equipe", icon: Users },
+  { href: "/acessos", label: "Acessos", icon: KeyRound },
 ];
 
 function useLogout() {
